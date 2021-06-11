@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+package entity;
+
+option go_package = "./;entity";
+
+import "google/protobuf/timestamp.proto";
+
+message Detection {
+  int32 min_x = 1;
+  int32 min_y = 2;
+  int32 max_x = 3;
+  int32 max_y = 4;
+  double confidence = 5;
+}
+
+message Detections {
+  string camera_id = 1;
+  bytes frame = 2;
+  repeated Detection detections = 3;
+  google.protobuf.Timestamp detected_at = 4;
+}
