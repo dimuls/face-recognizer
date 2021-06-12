@@ -50,7 +50,7 @@ func main() {
 		config.FrameRate = 25
 	}
 
-	// Если в конфиге нет камер, то выходим с ошибкой
+	// Если в конфиге нет камер, то выходим с ошибкой.
 	if len(config.Cameras) == 0 {
 		logrus.Panic("no camera defined")
 	}
@@ -74,10 +74,10 @@ func main() {
 	// Подготовка каналов для получения кадров из обработчика камер.
 	frames := map[string]<-chan []byte{}
 
-	// Контекст для остановки приложения
+	// Контекст для остановки приложения.
 	ctx, cancel := context.WithCancel(context.Background())
 
-	// Группа для ожидания завершения обработчиков
+	// Группа для ожидания завершения обработчиков.
 	var wg sync.WaitGroup
 
 	// Запуск обработчиков кадров.
@@ -91,17 +91,17 @@ func main() {
 
 	logrus.Info("everything is started")
 
-	// Ожидания сигнала завершения
+	// Ожидания сигнала завершения.
 	exit := make(chan os.Signal)
 	signal.Notify(exit, os.Interrupt, syscall.SIGTERM)
 	<-exit
 
 	logrus.Info("exit signal received, stopping")
 
-	// Остановка обработчиков
+	// Остановка обработчиков.
 	cancel()
 
-	// Ожидания завершения всех обработчиков
+	// Ожидания завершения всех обработчиков.
 	wg.Wait()
 
 	logrus.Info("everything is stopped, exiting")
@@ -114,9 +114,10 @@ func main() {
 func runCameraProcessor(ctx context.Context, wg *sync.WaitGroup,
 	camera CameraConfig, closedDuration time.Duration) <-chan []byte {
 
-	// Канал JPEG-кадров с камеры
+	// Канал JPEG-кадров с камеры.
 	frames := make(chan []byte)
 
+	// Запуск горутины обработчика камеры.
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
@@ -228,9 +229,9 @@ func runDetector(ctx context.Context, wg *sync.WaitGroup,
 		cameraFramesMapMx sync.Mutex
 	)
 
-	// Запуск обработчиков кадров: из обработчика камер к нам будут поступать
+	// Запуск сборщиков кадров: из обработчика камер к нам будут поступать
 	// новые кадры, которые нужно получить и собрать в cameraFramesMap.
-	// Нам это нужно, чтобы далее, в обработчике детекора, запустить пакетное
+	// Нам это нужно, чтобы далее, в обработчике детектора, запустить пакетное
 	// обнаружение лиц сразу по всем собранным кадрам.
 	for cameraID, cameraFramesChan := range cameraFramesChans {
 		wg.Add(1)
@@ -295,7 +296,7 @@ func runDetector(ctx context.Context, wg *sync.WaitGroup,
 		defer t.Stop()
 
 		for {
-			// Ожидание следующих кадров либо, моментальный переход к их
+			// Ожидание следующих кадров либо моментальный переход к их
 			// обработке.
 			if time.Now().Sub(startTime) < frameTime {
 				if !t.Stop() {

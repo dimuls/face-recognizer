@@ -75,7 +75,6 @@ func main() {
 
 			msg, err := sub.NextMsgWithContext(ctx)
 			if err != nil {
-				logrus.WithError(err).Error("get next nuts message")
 				continue
 			}
 
