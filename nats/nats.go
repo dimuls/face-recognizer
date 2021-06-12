@@ -2,8 +2,14 @@ package nats
 
 import "fmt"
 
-const detectionsSubjectFormat = "camera.%s.detections"
+const cameraDetectionsSubjectFormat = "camera.%s.detections"
 
 func CameraDetectionsSubject(cameraID string) string {
-	return fmt.Sprintf(detectionsSubjectFormat, cameraID)
+	return fmt.Sprintf(cameraDetectionsSubjectFormat, cameraID)
+}
+
+const cameraRecognitionsSubjectFormat = "camera.%s.recognitions"
+
+func CameraRecognitionsSubject(cameraID string) string {
+	return fmt.Sprintf(cameraRecognitionsSubjectFormat, cameraID)
 }

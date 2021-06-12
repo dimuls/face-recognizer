@@ -8,7 +8,6 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"image"
 	"image/color"
 	"os"
 	"os/signal"
@@ -48,7 +47,7 @@ func main() {
 		logrus.WithError(err).Fatal("failed to connect to nats")
 	}
 
-	sub, err := nc.SubscribeSync(nats.CameraDetectionsSubject(cameraID))
+	sub, err := nc.SubscribeSync(nats.CameraRecognitionsSubject(cameraID))
 	if err != nil {
 		logrus.WithError(err).Fatal("failed to nats subscribe to detections")
 	}
@@ -78,39 +77,22 @@ func main() {
 				continue
 			}
 
-			ds := &entity.Detections{}
+			r := &entity.Recognition{}
 
-			err = proto.Unmarshal(msg.Data, ds)
+			err = proto.Unmarshal(msg.Data, r)
 			if err != nil {
 				logrus.WithError(err).Error("failed to proto unmarshal detections")
 				return
 			}
 
-			img, err := gocv.IMDecode(ds.Frame, gocv.IMReadUnchanged)
+			img, err := gocv.IMDecode(r.Face, gocv.IMReadUnchanged)
 			if err != nil {
 				logrus.WithError(err).Error("failed to decode frame image")
 				return
 			}
 
-			for _, d := range ds.Detections {
-				gocv.Rectangle(&img, image.Rectangle{
-					Min: image.Point{
-						X: int(d.MinX),
-						Y: int(d.MinY),
-					},
-					Max: image.Point{
-						X: int(d.MaxX),
-						Y: int(d.MaxY),
-					},
-				}, blue, 1)
-				gocv.PutText(&img, fmt.Sprintf("%.2f", d.Confidence),
-					image.Point{
-						X: int(d.MinX),
-						Y: int(d.MinY),
-					}, gocv.FontHersheyComplex, 1, blue, 1)
-			}
-
 			w.IMShow(img)
+			fmt.Println(r.FaceDescriptor)
 
 			if w.WaitKey(1) == 27 {
 				cancel()
@@ -130,6 +112,7 @@ func main() {
 	case <-exit:
 	case <-ctx.Done():
 	}
+
 	cancel()
 	wg.Wait()
 

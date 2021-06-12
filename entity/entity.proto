@@ -20,3 +20,10 @@ message Detections {
   repeated Detection detections = 3;
   google.protobuf.Timestamp detected_at = 4;
 }
+
+message Recognition {
+  string camera_id = 1;
+  bytes face = 2;
+  repeated float face_descriptor = 3;
+  google.protobuf.Timestamp detected_at = 4;
+}
