@@ -8,6 +8,6 @@ require (
 	github.com/nats-io/nats.go v1.11.0
 	github.com/sirupsen/logrus v1.8.1
 	gocv.io/x/gocv v0.27.0
-	google.golang.org/protobuf v1.26.0 // indirect
+	google.golang.org/protobuf v1.26.0
 	gopkg.in/yaml.v2 v2.4.0
 )

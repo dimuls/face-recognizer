@@ -1,3 +1,5 @@
+// Файл с загрузчиком конфига. Тут ничего интересного: просто чтение файла
+// конфига и парсинг содержимого в Go-структуру.
 package main
 
 import (
@@ -14,17 +16,17 @@ type CameraConfig struct {
 }
 
 type Config struct {
-	ModelPath      string         `yaml:"model_path"`
-	CudaDeviceID   int            `yaml:"cuda_device_id"`
-	FrameRate      int            `yaml:"frame_rate"`
-	ClosedDuration time.Duration  `yaml:"closed_duration"`
-	Cameras        []CameraConfig `yaml:"camera"`
-	NatsURL        string         `yaml:"nats_url"`
+	configYAML
+	ClosedDuration time.Duration `yaml:"closed_duration"`
 }
 
 type configYAML struct {
-	ClosedDuration string `yaml:"batch_wait"`
-	Config
+	ModelPath      string         `yaml:"model_path"`
+	CudaDevice     int            `yaml:"cuda_device"`
+	FrameRate      int            `yaml:"frame_rate"`
+	ClosedDuration string         `yaml:"closed_duration"`
+	Cameras        []CameraConfig `yaml:"cameras"`
+	NatsURL        string         `yaml:"nats_url"`
 }
 
 func (c *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {
@@ -35,7 +37,7 @@ func (c *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {
 		return fmt.Errorf("parse config: %w", err)
 	}
 
-	*c = cYAML.Config
+	c.configYAML = cYAML
 
 	c.ClosedDuration, err = time.ParseDuration(cYAML.ClosedDuration)
 	if err != nil {
