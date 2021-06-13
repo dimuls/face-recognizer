@@ -30,7 +30,7 @@ func main() {
 	)
 
 	flag.StringVar(&natsURL, "nats-url", "nats://127.0.0.1:4222", "nats server url")
-	flag.StringVar(&cameraID, "camera-id", "", "camera id")
+	flag.StringVar(&cameraID, "camera-id", "*", "camera id")
 
 	flag.Parse()
 
@@ -39,7 +39,7 @@ func main() {
 		logrus.WithError(err).Fatal("failed to connect to nats")
 	}
 
-	sub, err := nc.SubscribeSync(nats.CameraRecognitionsSubject(cameraID))
+	sub, err := nc.SubscribeSync(nats.CameraAlertsSubject(cameraID))
 	if err != nil {
 		logrus.WithError(err).Fatal("failed to nats subscribe to recognitions")
 	}
@@ -69,22 +69,22 @@ func main() {
 				continue
 			}
 
-			r := &entity.Recognition{}
+			a := &entity.Alert{}
 
-			err = proto.Unmarshal(msg.Data, r)
+			err = proto.Unmarshal(msg.Data, a)
 			if err != nil {
-				logrus.WithError(err).Error("failed to proto unmarshal recognition")
+				logrus.WithError(err).Error("failed to proto unmarshal alert")
 				return
 			}
 
-			img, err := gocv.IMDecode(r.Face, gocv.IMReadUnchanged)
+			img, err := gocv.IMDecode(a.Face, gocv.IMReadUnchanged)
 			if err != nil {
 				logrus.WithError(err).Error("failed to decode frame image")
 				return
 			}
 
 			w.IMShow(img)
-			fmt.Println(r.FaceDescriptor)
+			fmt.Println(a.Name)
 
 			if w.WaitKey(1) == 27 {
 				cancel()

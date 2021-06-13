@@ -13,3 +13,9 @@ const cameraRecognitionsSubjectFormat = "camera.%s.recognitions"
 func CameraRecognitionsSubject(cameraID string) string {
 	return fmt.Sprintf(cameraRecognitionsSubjectFormat, cameraID)
 }
+
+const cameraAlertsSubject = "camera.%s.alerts"
+
+func CameraAlertsSubject(cameraID string) string {
+	return fmt.Sprintf(cameraAlertsSubject, cameraID)
+}

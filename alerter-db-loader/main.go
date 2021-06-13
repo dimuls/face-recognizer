@@ -6,14 +6,15 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"flag"
-	"fmt"
 	"os"
 	"os/signal"
 	"runtime"
 	"sync"
 	"syscall"
 
+	"github.com/lib/pq"
 	natsGo "github.com/nats-io/nats.go"
 	"github.com/sirupsen/logrus"
 	"gocv.io/x/gocv"
@@ -25,14 +26,41 @@ import (
 
 func main() {
 	var (
-		natsURL  string
-		cameraID string
+		natsURL     string
+		cameraID    string
+		personID    int64
+		personName  string
+		postgresDSN string
+		facesToAdd  int
 	)
 
 	flag.StringVar(&natsURL, "nats-url", "nats://127.0.0.1:4222", "nats server url")
-	flag.StringVar(&cameraID, "camera-id", "", "camera id")
+	flag.StringVar(&cameraID, "camera-id", "*", "camera id")
+	flag.Int64Var(&personID, "person-id", 0, "person id")
+	flag.StringVar(&personName, "person-name", "", "person name")
+	flag.StringVar(&postgresDSN, "postgres-dsn", "", "postgres dsn")
+	flag.IntVar(&facesToAdd, "faces-to-add", 100, "faces to add to db")
 
 	flag.Parse()
+
+	db, err := sql.Open("postgres", postgresDSN)
+	if err != nil {
+		logrus.WithError(err).Fatal("failed to open db")
+	}
+
+	if personID == 0 {
+		if personName == "" {
+			logrus.Fatal("empty person name")
+		}
+		err = db.QueryRow(`
+			insert into person (name) values ($1)
+			returning id
+		`, personName).Scan(&personID)
+		if err != nil {
+			logrus.WithError(err).Fatal("failed to add person to DB")
+		}
+		logrus.WithField("person_id", personID).Info("created person")
+	}
 
 	nc, err := natsGo.Connect(natsURL)
 	if err != nil {
@@ -58,6 +86,10 @@ func main() {
 		defer w.Close()
 
 		for {
+			if facesToAdd == 0 {
+				cancel()
+			}
+
 			select {
 			case <-ctx.Done():
 				return
@@ -84,7 +116,16 @@ func main() {
 			}
 
 			w.IMShow(img)
-			fmt.Println(r.FaceDescriptor)
+
+			_, err = db.Exec(`
+				insert into face (person_id, descriptor) 
+				values ($1, $2)
+			`, personID, pq.Array(r.FaceDescriptor))
+			if err != nil {
+				logrus.WithError(err).Error("failed to add face to db")
+			}
+
+			facesToAdd--
 
 			if w.WaitKey(1) == 27 {
 				cancel()

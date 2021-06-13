@@ -12,12 +12,13 @@ import (
 	"syscall"
 
 	"github.com/dimuls/face"
-	"github.com/dimuls/face-recognizer/entity"
-	"github.com/dimuls/face-recognizer/nats"
 	natsGo "github.com/nats-io/nats.go"
 	"github.com/sirupsen/logrus"
 	"gocv.io/x/gocv"
 	"google.golang.org/protobuf/proto"
+
+	"github.com/dimuls/face-recognizer/entity"
+	"github.com/dimuls/face-recognizer/nats"
 )
 
 func main() {
@@ -160,7 +161,7 @@ func main() {
 
 					// Формируем и кодируем распознавание.
 					recProto, err := proto.Marshal(&entity.Recognition{
-						CameraId:       cameraID,
+						CameraId:       ds.CameraId,
 						Face:           face,
 						FaceDescriptor: descr[:],
 						DetectedAt:     ds.DetectedAt,

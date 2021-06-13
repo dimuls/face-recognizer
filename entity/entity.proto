@@ -27,3 +27,11 @@ message Recognition {
   repeated float face_descriptor = 3;
   google.protobuf.Timestamp detected_at = 4;
 }
+
+message Alert {
+  string camera_id = 1;
+  bytes face = 2;
+  string name = 3;
+  google.protobuf.Timestamp detected_at = 4;
+
+}
