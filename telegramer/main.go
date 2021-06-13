@@ -71,6 +71,7 @@ func main() {
 		logrus.WithError(err).Fatal("failed to connect to nats")
 	}
 
+	// Создаём телеграм бота.
 	b, err := telebot.NewBot(telebot.Settings{
 		Token: config.TelegramBotToken,
 	})
@@ -81,6 +82,7 @@ func main() {
 	var wg sync.WaitGroup
 	ctx, cancel := context.WithCancel(context.Background())
 
+	// Запуск обработчика telegramer.
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
@@ -124,12 +126,14 @@ func main() {
 				return
 			}
 
+			// Формируем телеграм сообщение с фотографией обнаруженного лица.
 			f := &telebot.Photo{
 				File: telebot.FromReader(bytes.NewReader(a.Face)),
 				Caption: fmt.Sprintf("Имя: %s, Камера: %s",
 					a.Name, a.CameraId),
 			}
 
+			// Рассылка по телеграм-чатам сообщения.
 			for _, chatID := range config.Chats {
 				b.Send(telebot.ChatID(chatID), f)
 			}
