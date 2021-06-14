@@ -1,0 +1,5 @@
+telegram_bot_token: <bot-token>
+camera: main
+chats:
+#  - <chat-id>
+nats_url: nats://127.0.0.1:4222

@@ -1,3 +1,5 @@
 .idea
-run-local
 *.pb.go
+build
+models
+run-local

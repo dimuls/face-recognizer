@@ -1,0 +1,8 @@
+model_path: ./models/mmod_human_face_detector.dat
+cuda_device: 0
+frame_rate: 25
+closed_duration: 3s
+cameras:
+  - id: main
+    url: <camera-url>
+nats_url: nats://127.0.0.1:4222

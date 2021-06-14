@@ -5,13 +5,12 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"math"
 	"os"
 	"os/signal"
 	"sync"
 	"syscall"
+	"time"
 
-	"github.com/dimuls/face"
 	_ "github.com/lib/pq"
 	natsGo "github.com/nats-io/nats.go"
 	"github.com/sirupsen/logrus"
@@ -21,32 +20,6 @@ import (
 	"github.com/dimuls/face-recognizer/entity"
 	"github.com/dimuls/face-recognizer/nats"
 )
-
-type Face struct {
-	PersonID   int64
-	Descriptor face.Descriptor
-}
-
-func EuclideanDistance(d1, d2 face.Descriptor) float64 {
-	var sum float64
-	for i := range d1 {
-		sum += math.Pow(float64(d1[i])-float64(d2[i]), 2)
-	}
-	return math.Sqrt(sum)
-}
-
-func FindClosestFace(faces []Face, d face.Descriptor) (Face, float64) {
-	closestFace := faces[0]
-	closestDistance := EuclideanDistance(faces[0].Descriptor, d)
-	for i := 1; i < len(faces); i++ {
-		d := EuclideanDistance(faces[i].Descriptor, d)
-		if d < closestDistance {
-			closestFace = faces[i]
-			closestDistance = d
-		}
-	}
-	return closestFace, closestDistance
-}
 
 func main() {
 	logrus.SetLevel(logrus.DebugLevel)
@@ -73,11 +46,18 @@ func main() {
 
 	// Создаём телеграм бота.
 	b, err := telebot.NewBot(telebot.Settings{
-		Token: config.TelegramBotToken,
+		Token:  config.TelegramBotToken,
+		Poller: &telebot.LongPoller{Timeout: 10 * time.Second},
 	})
 	if err != nil {
 		logrus.WithError(err).Fatal("failed to create telegram bot")
 	}
+
+	b.Handle("/start", func(m *telebot.Message) {
+		b.Send(m.Sender, fmt.Sprintf("Ваш ID чата: %d", m.Chat.ID))
+	})
+
+	go b.Start()
 
 	var wg sync.WaitGroup
 	ctx, cancel := context.WithCancel(context.Background())
@@ -102,6 +82,8 @@ func main() {
 			return
 		}
 
+		defer sub.Unsubscribe()
+
 		// Основной цикл обработки.
 		for {
 			select {
@@ -121,13 +103,13 @@ func main() {
 			// Декодируем обнаружения.
 			err = proto.Unmarshal(msg.Data, a)
 			if err != nil {
-				logrus.WithError(err).Error(
+				log.WithError(err).Error(
 					"failed to proto unmarshal recognition")
-				return
+				continue
 			}
 
 			// Формируем телеграм сообщение с фотографией обнаруженного лица.
-			f := &telebot.Photo{
+			m := &telebot.Photo{
 				File: telebot.FromReader(bytes.NewReader(a.Face)),
 				Caption: fmt.Sprintf("Имя: %s, Камера: %s",
 					a.Name, a.CameraId),
@@ -135,7 +117,10 @@ func main() {
 
 			// Рассылка по телеграм-чатам сообщения.
 			for _, chatID := range config.Chats {
-				b.Send(telebot.ChatID(chatID), f)
+				_, err = b.Send(telebot.ChatID(chatID), m)
+				if err != nil {
+					log.WithError(err).Error("failed to send message")
+				}
 			}
 		}
 	}()

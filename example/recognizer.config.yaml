@@ -1,0 +1,8 @@
+recognizer_model_path: ./models/dlib_face_recognition_resnet_model_v1.dat
+shaper_model_path: ./models/shape_predictor_68_face_landmarks.dat
+padding: 0
+jittering: 0
+cuda_device: 0
+cameras:
+  - main
+nats_url: nats://127.0.0.1:4222

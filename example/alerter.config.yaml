@@ -1,0 +1,7 @@
+postgres_dsn: postgres://alerter:<password>@localhost/alerter?sslmode=disable
+active_face_duration: 1m
+active_face_cleaner_period: 5m
+similar_face_distance: 0.6
+cameras:
+  - main
+nats_url: nats://127.0.0.1:4222
